@@ -12,7 +12,7 @@ const cartStore = useCartStore();
 const isAuthenticated = computed(() => authStore.isAuthenticated);
 const isAdmin = computed(() => authStore.isAdmin);
 const itemCount = computed(() => cartStore.itemCount);
-const userName = computed(() => authStore.user?.firstname || 'User');
+const userName = computed(() => authStore.user?.firstname || '用户');
 
 const logout = () => {
   authStore.logout();
@@ -38,13 +38,13 @@ const logout = () => {
         router
         class="main-menu"
       >
-        <el-menu-item index="/">Home</el-menu-item>
-        <el-menu-item index="/products">Products</el-menu-item>
+        <el-menu-item index="/">首页</el-menu-item>
+        <el-menu-item index="/products">商品</el-menu-item>
         
         <template v-if="isAuthenticated">
-          <el-menu-item index="/orders">My Orders</el-menu-item>
-          <el-menu-item index="/profile">Profile</el-menu-item>
-          <el-menu-item v-if="isAdmin" index="/admin">Admin</el-menu-item>
+          <el-menu-item index="/orders">我的订单</el-menu-item>
+          <el-menu-item index="/profile">个人中心</el-menu-item>
+          <el-menu-item v-if="isAdmin" index="/admin">管理后台</el-menu-item>
         </template>
       </el-menu>
       
@@ -56,8 +56,8 @@ const logout = () => {
         </el-badge>
         
         <template v-if="!isAuthenticated">
-          <el-button @click="router.push('/login')">Login</el-button>
-          <el-button type="primary" @click="router.push('/register')">Register</el-button>
+          <el-button @click="router.push('/login')">登录</el-button>
+          <el-button type="primary" @click="router.push('/register')">注册</el-button>
         </template>
         <template v-else>
           <el-dropdown>
@@ -67,8 +67,8 @@ const logout = () => {
             <template #dropdown>
               <el-dropdown-menu>
                 <el-dropdown-item disabled>{{ userName }}</el-dropdown-item>
-                <el-dropdown-item divided @click="router.push('/profile')">Profile</el-dropdown-item>
-                <el-dropdown-item @click="logout">Logout</el-dropdown-item>
+                <el-dropdown-item divided @click="router.push('/profile')">个人中心</el-dropdown-item>
+                <el-dropdown-item @click="logout">退出登录</el-dropdown-item>
               </el-dropdown-menu>
             </template>
           </el-dropdown>
