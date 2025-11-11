@@ -2,6 +2,8 @@
 import { computed } from 'vue';
 import { useRouter } from 'vue-router';
 import { useCartStore } from '../../stores/cart';
+import { Delete, ShoppingCart } from '@element-plus/icons-vue';
+import { ElMessage, ElMessageBox } from 'element-plus';
 
 const router = useRouter();
 const cartStore = useCartStore();
@@ -10,11 +12,27 @@ const items = computed(() => cartStore.items);
 const totalPrice = computed(() => cartStore.totalPrice);
 
 const updateQuantity = (productId, quantity) => {
-  cartStore.updateQuantity(productId, quantity);
+  if (quantity > 0) {
+    cartStore.updateQuantity(productId, quantity);
+  }
 };
 
-const removeItem = (productId) => {
-  cartStore.removeItem(productId);
+const removeItem = async (productId, productName) => {
+  try {
+    await ElMessageBox.confirm(
+      `Are you sure you want to remove "${productName}" from your cart?`,
+      'Remove Item',
+      {
+        confirmButtonText: 'Remove',
+        cancelButtonText: 'Cancel',
+        type: 'warning',
+      }
+    );
+    cartStore.removeItem(productId);
+    ElMessage.success('Item removed from cart');
+  } catch {
+    // User cancelled
+  }
 };
 
 const checkout = () => {
@@ -24,146 +42,127 @@ const checkout = () => {
 
 <template>
   <div class="cart-page">
-    <h1>Shopping Cart</h1>
+    <el-page-header title="Shopping Cart">
+      <template #content>
+        <el-icon><ShoppingCart /></el-icon>
+        <span> Cart ({{ items.length }} items)</span>
+      </template>
+    </el-page-header>
     
-    <div v-if="items.length === 0" class="empty-cart">
-      <p>Your cart is empty</p>
-      <router-link to="/products" class="btn btn-primary">Continue Shopping</router-link>
+    <div v-if="items.length === 0" style="margin-top: 40px">
+      <el-empty description="Your cart is empty">
+        <el-button type="primary" @click="router.push('/products')">
+          Continue Shopping
+        </el-button>
+      </el-empty>
     </div>
     
-    <div v-else>
-      <div class="cart-items">
-        <div v-for="item in items" :key="item.id" class="cart-item">
-          <img :src="item.imageUrl || '/placeholder.jpg'" :alt="item.name" />
-          <div class="item-info">
-            <h3>{{ item.name }}</h3>
-            <p class="price">${{ item.unitPrice }}</p>
-          </div>
-          <div class="quantity">
-            <input 
-              type="number" 
-              :value="item.quantity" 
-              @input="updateQuantity(item.id, parseInt($event.target.value))"
-              min="1"
-              :max="item.stock"
-            />
-          </div>
-          <div class="subtotal">
-            <p>${{ (item.unitPrice * item.quantity).toFixed(2) }}</p>
-          </div>
-          <button class="remove" @click="removeItem(item.id)">Remove</button>
-        </div>
-      </div>
-      
-      <div class="cart-summary">
-        <h2>Total: ${{ totalPrice }}</h2>
-        <button class="btn btn-primary" @click="checkout">Proceed to Checkout</button>
-      </div>
+    <div v-else style="margin-top: 20px">
+      <el-row :gutter="20">
+        <el-col :xs="24" :lg="16">
+          <el-card>
+            <el-space direction="vertical" style="width: 100%" size="large">
+              <div v-for="item in items" :key="item.id" class="cart-item">
+                <el-row :gutter="20" align="middle">
+                  <el-col :xs="6" :sm="4">
+                    <el-image 
+                      :src="item.imageUrl || '/placeholder.jpg'" 
+                      :alt="item.name"
+                      fit="cover"
+                      style="width: 100%; border-radius: 8px"
+                    />
+                  </el-col>
+                  <el-col :xs="18" :sm="10">
+                    <div>
+                      <el-text size="large" tag="b">{{ item.name }}</el-text>
+                      <br />
+                      <el-text type="success" tag="b">${{ item.unitPrice }}</el-text>
+                    </div>
+                  </el-col>
+                  <el-col :xs="12" :sm="6">
+                    <el-input-number 
+                      :model-value="item.quantity"
+                      @change="(val) => updateQuantity(item.id, val)"
+                      :min="1"
+                      :max="item.stock"
+                      size="small"
+                    />
+                  </el-col>
+                  <el-col :xs="8" :sm="3">
+                    <el-text size="large" tag="b">
+                      ${{ (item.unitPrice * item.quantity).toFixed(2) }}
+                    </el-text>
+                  </el-col>
+                  <el-col :xs="4" :sm="1">
+                    <el-button 
+                      :icon="Delete" 
+                      circle 
+                      type="danger"
+                      @click="removeItem(item.id, item.name)"
+                    />
+                  </el-col>
+                </el-row>
+              </div>
+            </el-space>
+          </el-card>
+        </el-col>
+        
+        <el-col :xs="24" :lg="8">
+          <el-card>
+            <template #header>
+              <el-text size="large" tag="b">Order Summary</el-text>
+            </template>
+            <el-space direction="vertical" style="width: 100%" size="large">
+              <div>
+                <el-row justify="space-between">
+                  <el-col :span="12">
+                    <el-text>Subtotal:</el-text>
+                  </el-col>
+                  <el-col :span="12" style="text-align: right">
+                    <el-text tag="b">${{ totalPrice }}</el-text>
+                  </el-col>
+                </el-row>
+                <el-row justify="space-between" style="margin-top: 10px">
+                  <el-col :span="12">
+                    <el-text>Shipping:</el-text>
+                  </el-col>
+                  <el-col :span="12" style="text-align: right">
+                    <el-text tag="b">FREE</el-text>
+                  </el-col>
+                </el-row>
+              </div>
+              <el-divider style="margin: 0" />
+              <el-row justify="space-between">
+                <el-col :span="12">
+                  <el-text size="large" tag="b">Total:</el-text>
+                </el-col>
+                <el-col :span="12" style="text-align: right">
+                  <el-text size="large" tag="b" type="success">${{ totalPrice }}</el-text>
+                </el-col>
+              </el-row>
+              <el-button type="primary" size="large" @click="checkout" style="width: 100%">
+                Proceed to Checkout
+              </el-button>
+              <el-button @click="router.push('/products')" style="width: 100%">
+                Continue Shopping
+              </el-button>
+            </el-space>
+          </el-card>
+        </el-col>
+      </el-row>
     </div>
   </div>
 </template>
 
 <style scoped>
 .cart-page {
-  max-width: 1000px;
+  max-width: 1200px;
   margin: 0 auto;
 }
 
-h1 {
-  margin-bottom: 2rem;
-}
-
-.empty-cart {
-  text-align: center;
-  padding: 4rem 0;
-}
-
-.empty-cart p {
-  margin-bottom: 2rem;
-  font-size: 1.2rem;
-  color: #666;
-}
-
-.cart-items {
-  margin-bottom: 2rem;
-}
-
 .cart-item {
-  display: grid;
-  grid-template-columns: 100px 1fr 100px 100px 100px;
-  gap: 1rem;
-  align-items: center;
   padding: 1rem;
-  border: 1px solid #ddd;
+  border: 1px solid #EBEEF5;
   border-radius: 8px;
-  margin-bottom: 1rem;
-}
-
-.cart-item img {
-  width: 100%;
-  border-radius: 4px;
-}
-
-.item-info h3 {
-  margin-bottom: 0.5rem;
-}
-
-.price {
-  color: #27ae60;
-  font-weight: bold;
-}
-
-.quantity input {
-  width: 60px;
-  padding: 0.5rem;
-  border: 1px solid #ddd;
-  border-radius: 4px;
-}
-
-.subtotal p {
-  font-weight: bold;
-  color: #2c3e50;
-}
-
-.remove {
-  padding: 0.5rem 1rem;
-  background: #e74c3c;
-  color: white;
-  border: none;
-  border-radius: 4px;
-  cursor: pointer;
-}
-
-.remove:hover {
-  background: #c0392b;
-}
-
-.cart-summary {
-  text-align: right;
-  padding: 2rem;
-  background: #f5f5f5;
-  border-radius: 8px;
-}
-
-.cart-summary h2 {
-  margin-bottom: 1rem;
-}
-
-.btn {
-  padding: 1rem 2rem;
-  border: none;
-  border-radius: 4px;
-  cursor: pointer;
-  text-decoration: none;
-  display: inline-block;
-}
-
-.btn-primary {
-  background: #3498db;
-  color: white;
-}
-
-.btn-primary:hover {
-  background: #2980b9;
 }
 </style>

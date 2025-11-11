@@ -1,85 +1,119 @@
 <script setup>
-import { ref, onMounted } from 'vue';
+import { ref, reactive } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { useAuthStore } from '../../stores/auth';
+import { Lock } from '@element-plus/icons-vue';
+import { ElMessage } from 'element-plus';
 
 const route = useRoute();
 const router = useRouter();
 const authStore = useAuthStore();
 
-const token = ref(route.query.token || '');
-const password = ref('');
-const confirmPassword = ref('');
-const error = ref('');
-const success = ref(false);
+const formData = reactive({
+  token: route.query.token || '',
+  password: '',
+  confirmPassword: '',
+});
+
 const loading = ref(false);
+const formRef = ref(null);
+
+const validateConfirmPassword = (rule, value, callback) => {
+  if (value !== formData.password) {
+    callback(new Error('Passwords do not match'));
+  } else {
+    callback();
+  }
+};
+
+const rules = {
+  password: [
+    { required: true, message: 'Please input password', trigger: 'blur' },
+    { min: 6, message: 'Password must be at least 6 characters', trigger: 'blur' }
+  ],
+  confirmPassword: [
+    { required: true, message: 'Please confirm password', trigger: 'blur' },
+    { validator: validateConfirmPassword, trigger: 'blur' }
+  ]
+};
 
 const handleSubmit = async () => {
-  error.value = '';
+  if (!formRef.value) return;
   
-  if (password.value !== confirmPassword.value) {
-    error.value = 'Passwords do not match';
-    return;
-  }
-
-  loading.value = true;
-
-  try {
-    await authStore.resetPassword(token.value, password.value);
-    success.value = true;
-    setTimeout(() => {
-      router.push('/login');
-    }, 2000);
-  } catch (err) {
-    error.value = err.response?.data?.message || 'Failed to reset password. Please try again.';
-  } finally {
-    loading.value = false;
-  }
+  await formRef.value.validate(async (valid) => {
+    if (valid) {
+      loading.value = true;
+      try {
+        await authStore.resetPassword(formData.token, formData.password);
+        ElMessage.success('Password reset successfully!');
+        setTimeout(() => {
+          router.push('/login');
+        }, 2000);
+      } catch (err) {
+        ElMessage.error(err.response?.data?.message || 'Failed to reset password.');
+      } finally {
+        loading.value = false;
+      }
+    }
+  });
 };
 </script>
 
 <template>
   <div class="auth-page">
-    <div class="auth-container">
-      <h1>Reset Password</h1>
-      
-      <form @submit.prevent="handleSubmit">
-        <div v-if="error" class="error-message">
-          {{ error }}
-        </div>
+    <el-row justify="center">
+      <el-col :xs="22" :sm="16" :md="12" :lg="8">
+        <el-card shadow="always">
+          <template #header>
+            <div class="card-header">
+              <h1>Reset Password</h1>
+            </div>
+          </template>
+          
+          <el-form
+            ref="formRef"
+            :model="formData"
+            :rules="rules"
+            label-position="top"
+            @submit.prevent="handleSubmit"
+          >
+            <el-form-item label="New Password" prop="password">
+              <el-input
+                v-model="formData.password"
+                type="password"
+                :prefix-icon="Lock"
+                placeholder="Enter new password"
+                show-password
+                size="large"
+              />
+            </el-form-item>
 
-        <div v-if="success" class="success-message">
-          Password reset successfully! Redirecting to login...
-        </div>
+            <el-form-item label="Confirm Password" prop="confirmPassword">
+              <el-input
+                v-model="formData.confirmPassword"
+                type="password"
+                :prefix-icon="Lock"
+                placeholder="Confirm new password"
+                show-password
+                size="large"
+              />
+            </el-form-item>
 
-        <div class="form-group">
-          <label for="password">New Password</label>
-          <input
-            id="password"
-            v-model="password"
-            type="password"
-            required
-            placeholder="Enter new password"
-            minlength="6"
-          />
-        </div>
-
-        <div class="form-group">
-          <label for="confirmPassword">Confirm Password</label>
-          <input
-            id="confirmPassword"
-            v-model="confirmPassword"
-            type="password"
-            required
-            placeholder="Confirm new password"
-          />
-        </div>
-
-        <button type="submit" class="btn btn-primary" :disabled="loading || success">
-          {{ loading ? 'Resetting...' : 'Reset Password' }}
-        </button>
-      </form>
-    </div>
+            <el-form-item>
+              <el-button 
+                type="primary" 
+                native-type="submit" 
+                :loading="loading"
+                style="width: 100%"
+                size="large"
+              >
+                {{ loading ? 'Resetting...' : 'Reset Password' }}
+              </el-button>
+            </el-form-item>
+          </el-form>
+        </el-card>
+      </el-col>
+    </el-row>
   </div>
 </template>
 
@@ -89,84 +123,15 @@ const handleSubmit = async () => {
   justify-content: center;
   align-items: center;
   min-height: calc(100vh - 200px);
+  padding: 2rem 0;
 }
 
-.auth-container {
-  width: 100%;
-  max-width: 400px;
-  padding: 2rem;
-  background: white;
-  border-radius: 8px;
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-}
-
-h1 {
+.card-header {
   text-align: center;
-  margin-bottom: 2rem;
+}
+
+.card-header h1 {
+  margin: 0;
   color: #2c3e50;
-}
-
-.error-message {
-  background: #fee;
-  color: #c33;
-  padding: 1rem;
-  border-radius: 4px;
-  margin-bottom: 1rem;
-}
-
-.success-message {
-  background: #efe;
-  color: #3c3;
-  padding: 1rem;
-  border-radius: 4px;
-  margin-bottom: 1rem;
-}
-
-.form-group {
-  margin-bottom: 1.5rem;
-}
-
-label {
-  display: block;
-  margin-bottom: 0.5rem;
-  color: #2c3e50;
-  font-weight: 500;
-}
-
-input {
-  width: 100%;
-  padding: 0.75rem;
-  border: 1px solid #ddd;
-  border-radius: 4px;
-  font-size: 1rem;
-}
-
-input:focus {
-  outline: none;
-  border-color: #3498db;
-}
-
-.btn {
-  width: 100%;
-  padding: 0.75rem;
-  border: none;
-  border-radius: 4px;
-  font-size: 1rem;
-  cursor: pointer;
-  transition: background 0.3s;
-}
-
-.btn-primary {
-  background: #3498db;
-  color: white;
-}
-
-.btn-primary:hover:not(:disabled) {
-  background: #2980b9;
-}
-
-.btn:disabled {
-  opacity: 0.6;
-  cursor: not-allowed;
 }
 </style>

@@ -2,8 +2,11 @@
 import { ref, onMounted } from 'vue';
 import { useRouter } from 'vue-router';
 import { productService } from '../api/services';
+import { ShoppingCart } from '@element-plus/icons-vue';
+import { useCartStore } from '../stores/cart';
 
 const router = useRouter();
+const cartStore = useCartStore();
 const featuredProducts = ref([]);
 const loading = ref(true);
 
@@ -24,44 +27,81 @@ onMounted(async () => {
 const viewProduct = (id) => {
   router.push(`/products/${id}`);
 };
+
+const addToCart = (product) => {
+  if (product.stock > 0) {
+    cartStore.addItem(product);
+    ElMessage.success('Added to cart!');
+  }
+};
 </script>
 
 <template>
   <div class="home">
-    <section class="hero">
-      <h1>Welcome to E-Shop</h1>
-      <p>Discover amazing products at great prices</p>
-      <router-link to="/products" class="btn btn-large">Shop Now</router-link>
-    </section>
+    <el-row justify="center">
+      <el-col :xs="24" :sm="22" :md="20" :lg="18">
+        <div class="hero">
+          <h1>Welcome to E-Shop</h1>
+          <p>Discover amazing products at great prices</p>
+          <el-button type="primary" size="large" @click="router.push('/products')">
+            Shop Now
+          </el-button>
+        </div>
+      </el-col>
+    </el-row>
 
-    <section class="featured">
+    <div class="featured">
       <h2>Featured Products</h2>
       
-      <div v-if="loading" class="loading">Loading products...</div>
+      <div v-if="loading" v-loading="loading" style="min-height: 200px"></div>
       
-      <div v-else-if="featuredProducts.length > 0" class="product-grid">
-        <div 
+      <el-row v-else-if="featuredProducts.length > 0" :gutter="20">
+        <el-col 
           v-for="product in featuredProducts" 
-          :key="product.id" 
-          class="product-card"
-          @click="viewProduct(product.id)"
+          :key="product.id"
+          :xs="24"
+          :sm="12"
+          :md="8"
+          :lg="6"
         >
-          <div class="product-image">
-            <img :src="product.imageUrl || '/placeholder.jpg'" :alt="product.name" />
-          </div>
-          <div class="product-info">
-            <h3>{{ product.name }}</h3>
-            <p class="category">{{ product.categoryName }}</p>
-            <p class="price">${{ product.unitPrice }}</p>
-            <span v-if="product.stock <= 0" class="out-of-stock">Out of Stock</span>
-          </div>
-        </div>
-      </div>
+          <el-card 
+            :body-style="{ padding: '0px' }"
+            shadow="hover"
+            class="product-card"
+          >
+            <div class="product-image" @click="viewProduct(product.id)">
+              <el-image 
+                :src="product.imageUrl || '/placeholder.jpg'" 
+                :alt="product.name"
+                fit="cover"
+                style="width: 100%; height: 200px"
+              />
+            </div>
+            <div class="product-info">
+              <el-text size="large" tag="b" @click="viewProduct(product.id)" class="product-name">
+                {{ product.name }}
+              </el-text>
+              <el-text size="small" type="info">{{ product.categoryName }}</el-text>
+              <div class="price-section">
+                <el-text size="large" tag="b" type="success">${{ product.unitPrice }}</el-text>
+                <el-tag v-if="product.stock <= 0" type="danger" size="small">Out of Stock</el-tag>
+              </div>
+              <el-button 
+                type="primary" 
+                :icon="ShoppingCart"
+                @click="addToCart(product)"
+                :disabled="product.stock <= 0"
+                style="width: 100%"
+              >
+                Add to Cart
+              </el-button>
+            </div>
+          </el-card>
+        </el-col>
+      </el-row>
       
-      <div v-else class="no-products">
-        <p>No products available at the moment.</p>
-      </div>
-    </section>
+      <el-empty v-else description="No products available at the moment." />
+    </div>
   </div>
 </template>
 
@@ -89,21 +129,6 @@ const viewProduct = (id) => {
   margin-bottom: 2rem;
 }
 
-.btn {
-  display: inline-block;
-  padding: 1rem 2rem;
-  background: white;
-  color: #667eea;
-  text-decoration: none;
-  border-radius: 4px;
-  font-weight: bold;
-  transition: transform 0.3s;
-}
-
-.btn:hover {
-  transform: translateY(-2px);
-}
-
 .featured {
   margin-bottom: 3rem;
 }
@@ -114,74 +139,46 @@ const viewProduct = (id) => {
   font-size: 2rem;
 }
 
-.loading,
-.no-products {
-  text-align: center;
-  padding: 2rem;
-  color: #666;
-}
-
-.product-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
-  gap: 2rem;
-}
-
 .product-card {
-  border: 1px solid #ddd;
-  border-radius: 8px;
-  overflow: hidden;
+  margin-bottom: 20px;
   cursor: pointer;
-  transition: transform 0.3s, box-shadow 0.3s;
+  transition: transform 0.3s;
 }
 
 .product-card:hover {
   transform: translateY(-5px);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
 }
 
 .product-image {
-  width: 100%;
-  height: 200px;
+  cursor: pointer;
   overflow: hidden;
-  background: #f5f5f5;
-}
-
-.product-image img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
 }
 
 .product-info {
   padding: 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
 }
 
-.product-info h3 {
-  font-size: 1.1rem;
-  margin-bottom: 0.5rem;
-  color: #2c3e50;
+.product-name {
+  cursor: pointer;
 }
 
-.category {
-  color: #7f8c8d;
-  font-size: 0.9rem;
-  margin-bottom: 0.5rem;
+.product-name:hover {
+  color: #409EFF;
 }
 
-.price {
-  font-size: 1.25rem;
-  font-weight: bold;
-  color: #27ae60;
+.price-section {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin: 0.5rem 0;
 }
 
-.out-of-stock {
-  display: inline-block;
-  background: #e74c3c;
-  color: white;
-  padding: 0.25rem 0.5rem;
-  border-radius: 4px;
-  font-size: 0.8rem;
-  margin-top: 0.5rem;
+@media (max-width: 768px) {
+  .hero h1 {
+    font-size: 2rem;
+  }
 }
 </style>

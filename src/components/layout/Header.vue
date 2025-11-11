@@ -3,6 +3,7 @@ import { computed } from 'vue';
 import { useRouter } from 'vue-router';
 import { useAuthStore } from '../../stores/auth';
 import { useCartStore } from '../../stores/cart';
+import { ShoppingCart, User, UserFilled } from '@element-plus/icons-vue';
 
 const router = useRouter();
 const authStore = useAuthStore();
@@ -11,6 +12,7 @@ const cartStore = useCartStore();
 const isAuthenticated = computed(() => authStore.isAuthenticated);
 const isAdmin = computed(() => authStore.isAdmin);
 const itemCount = computed(() => cartStore.itemCount);
+const userName = computed(() => authStore.user?.firstname || 'User');
 
 const logout = () => {
   authStore.logout();
@@ -19,56 +21,80 @@ const logout = () => {
 </script>
 
 <template>
-  <header class="header">
-    <div class="container">
+  <el-header class="header">
+    <div class="header-content">
       <div class="logo">
-        <router-link to="/">E-Shop</router-link>
+        <router-link to="/">
+          <el-text size="large" tag="b">E-Shop</el-text>
+        </router-link>
       </div>
       
-      <nav class="nav">
-        <router-link to="/">Home</router-link>
-        <router-link to="/products">Products</router-link>
+      <el-menu
+        mode="horizontal"
+        :ellipsis="false"
+        background-color="#2c3e50"
+        text-color="#fff"
+        active-text-color="#409EFF"
+        router
+        class="main-menu"
+      >
+        <el-menu-item index="/">Home</el-menu-item>
+        <el-menu-item index="/products">Products</el-menu-item>
         
         <template v-if="isAuthenticated">
-          <router-link to="/orders">My Orders</router-link>
-          <router-link to="/profile">Profile</router-link>
-          <router-link v-if="isAdmin" to="/admin">Admin</router-link>
+          <el-menu-item index="/orders">My Orders</el-menu-item>
+          <el-menu-item index="/profile">Profile</el-menu-item>
+          <el-menu-item v-if="isAdmin" index="/admin">Admin</el-menu-item>
         </template>
-      </nav>
+      </el-menu>
       
       <div class="actions">
-        <router-link to="/cart" class="cart-link">
-          🛒 Cart
-          <span v-if="itemCount > 0" class="badge">{{ itemCount }}</span>
-        </router-link>
+        <el-badge :value="itemCount" :hidden="itemCount === 0" class="cart-badge">
+          <el-button @click="router.push('/cart')" circle>
+            <el-icon><ShoppingCart /></el-icon>
+          </el-button>
+        </el-badge>
         
         <template v-if="!isAuthenticated">
-          <router-link to="/login" class="btn">Login</router-link>
-          <router-link to="/register" class="btn btn-primary">Register</router-link>
+          <el-button @click="router.push('/login')">Login</el-button>
+          <el-button type="primary" @click="router.push('/register')">Register</el-button>
         </template>
         <template v-else>
-          <button @click="logout" class="btn">Logout</button>
+          <el-dropdown>
+            <el-button circle>
+              <el-icon><UserFilled /></el-icon>
+            </el-button>
+            <template #dropdown>
+              <el-dropdown-menu>
+                <el-dropdown-item disabled>{{ userName }}</el-dropdown-item>
+                <el-dropdown-item divided @click="router.push('/profile')">Profile</el-dropdown-item>
+                <el-dropdown-item @click="logout">Logout</el-dropdown-item>
+              </el-dropdown-menu>
+            </template>
+          </el-dropdown>
         </template>
       </div>
     </div>
-  </header>
+  </el-header>
 </template>
 
 <style scoped>
 .header {
   background: #2c3e50;
   color: white;
-  padding: 1rem 0;
+  padding: 0;
+  height: 60px;
   box-shadow: 0 2px 4px rgba(0,0,0,0.1);
 }
 
-.container {
+.header-content {
   max-width: 1400px;
   margin: 0 auto;
-  padding: 0 20px;
+  height: 100%;
   display: flex;
   align-items: center;
   gap: 2rem;
+  padding: 0 20px;
 }
 
 .logo {
@@ -81,23 +107,9 @@ const logout = () => {
   text-decoration: none;
 }
 
-.nav {
+.main-menu {
   flex: 1;
-  display: flex;
-  gap: 1.5rem;
-}
-
-.nav a {
-  color: white;
-  text-decoration: none;
-  padding: 0.5rem 1rem;
-  border-radius: 4px;
-  transition: background 0.3s;
-}
-
-.nav a:hover,
-.nav a.router-link-active {
-  background: rgba(255, 255, 255, 0.1);
+  border: none;
 }
 
 .actions {
@@ -106,58 +118,15 @@ const logout = () => {
   align-items: center;
 }
 
-.cart-link {
-  color: white;
-  text-decoration: none;
-  padding: 0.5rem 1rem;
-  border-radius: 4px;
-  position: relative;
-  transition: background 0.3s;
+.cart-badge {
+  margin-right: 0.5rem;
 }
 
-.cart-link:hover {
-  background: rgba(255, 255, 255, 0.1);
+:deep(.el-menu--horizontal > .el-menu-item) {
+  border-bottom: none;
 }
 
-.badge {
-  position: absolute;
-  top: -5px;
-  right: -5px;
-  background: #e74c3c;
-  color: white;
-  border-radius: 50%;
-  width: 20px;
-  height: 20px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 0.75rem;
-}
-
-.btn {
-  padding: 0.5rem 1rem;
-  border-radius: 4px;
-  text-decoration: none;
-  border: 1px solid white;
-  background: transparent;
-  color: white;
-  cursor: pointer;
-  transition: all 0.3s;
-}
-
-.btn:hover {
-  background: white;
-  color: #2c3e50;
-}
-
-.btn-primary {
-  background: #3498db;
-  border-color: #3498db;
-}
-
-.btn-primary:hover {
-  background: #2980b9;
-  border-color: #2980b9;
-  color: white;
+:deep(.el-menu--horizontal > .el-menu-item.is-active) {
+  border-bottom: 2px solid #409EFF;
 }
 </style>

@@ -1,15 +1,18 @@
 <template>
-  <footer class="footer">
-    <div class="container">
+  <el-footer class="footer">
+    <div class="footer-content">
       <p>&copy; 2024 E-Shop. All rights reserved.</p>
-      <div class="links">
-        <a href="#">About</a>
-        <a href="#">Contact</a>
-        <a href="#">Privacy Policy</a>
-        <a href="#">Terms of Service</a>
-      </div>
+      <el-space wrap>
+        <el-link href="#" :underline="false">About</el-link>
+        <el-divider direction="vertical" />
+        <el-link href="#" :underline="false">Contact</el-link>
+        <el-divider direction="vertical" />
+        <el-link href="#" :underline="false">Privacy Policy</el-link>
+        <el-divider direction="vertical" />
+        <el-link href="#" :underline="false">Terms of Service</el-link>
+      </el-space>
     </div>
-  </footer>
+  </el-footer>
 </template>
 
 <style scoped>
@@ -18,28 +21,29 @@
   color: white;
   padding: 2rem 0;
   margin-top: auto;
+  height: auto;
 }
 
-.container {
+.footer-content {
   max-width: 1400px;
   margin: 0 auto;
   padding: 0 20px;
   text-align: center;
 }
 
-.links {
-  margin-top: 1rem;
-  display: flex;
-  justify-content: center;
-  gap: 2rem;
+.footer-content p {
+  margin-bottom: 1rem;
 }
 
-.links a {
+:deep(.el-link) {
   color: white;
-  text-decoration: none;
 }
 
-.links a:hover {
-  text-decoration: underline;
+:deep(.el-link:hover) {
+  color: #409EFF;
+}
+
+:deep(.el-divider--vertical) {
+  background-color: rgba(255, 255, 255, 0.3);
 }
 </style>

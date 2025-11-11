@@ -1,63 +1,93 @@
 <script setup>
-import { ref } from 'vue';
+import { ref, reactive } from 'vue';
 import { useAuthStore } from '../../stores/auth';
+import { Message } from '@element-plus/icons-vue';
+import { ElMessage } from 'element-plus';
+import { useRouter } from 'vue-router';
 
+const router = useRouter();
 const authStore = useAuthStore();
-const email = ref('');
-const error = ref('');
-const success = ref(false);
+const formData = reactive({ email: '' });
 const loading = ref(false);
+const formRef = ref(null);
+
+const rules = {
+  email: [
+    { required: true, message: 'Please input email address', trigger: 'blur' },
+    { type: 'email', message: 'Please input correct email address', trigger: 'blur' }
+  ]
+};
 
 const handleSubmit = async () => {
-  error.value = '';
-  loading.value = true;
-
-  try {
-    await authStore.redeemPassword(email.value);
-    success.value = true;
-  } catch (err) {
-    error.value = err.response?.data?.message || 'Failed to send reset link. Please try again.';
-  } finally {
-    loading.value = false;
-  }
+  if (!formRef.value) return;
+  
+  await formRef.value.validate(async (valid) => {
+    if (valid) {
+      loading.value = true;
+      try {
+        await authStore.redeemPassword(formData.email);
+        ElMessage.success('Password reset link sent to your email. Please check your inbox.');
+      } catch (err) {
+        ElMessage.error(err.response?.data?.message || 'Failed to send reset link.');
+      } finally {
+        loading.value = false;
+      }
+    }
+  });
 };
 </script>
 
 <template>
   <div class="auth-page">
-    <div class="auth-container">
-      <h1>Forgot Password</h1>
-      <p class="info">Enter your email to receive a password reset link.</p>
-      
-      <form @submit.prevent="handleSubmit">
-        <div v-if="error" class="error-message">
-          {{ error }}
-        </div>
+    <el-row justify="center">
+      <el-col :xs="22" :sm="16" :md="12" :lg="8">
+        <el-card shadow="always">
+          <template #header>
+            <div class="card-header">
+              <h1>Forgot Password</h1>
+              <el-text type="info">Enter your email to receive a password reset link.</el-text>
+            </div>
+          </template>
+          
+          <el-form
+            ref="formRef"
+            :model="formData"
+            :rules="rules"
+            label-position="top"
+            @submit.prevent="handleSubmit"
+          >
+            <el-form-item label="Email" prop="email">
+              <el-input
+                v-model="formData.email"
+                :prefix-icon="Message"
+                placeholder="Enter your email"
+                size="large"
+              />
+            </el-form-item>
 
-        <div v-if="success" class="success-message">
-          Password reset link sent to your email. Please check your inbox.
-        </div>
+            <el-form-item>
+              <el-button 
+                type="primary" 
+                native-type="submit" 
+                :loading="loading"
+                style="width: 100%"
+                size="large"
+              >
+                {{ loading ? 'Sending...' : 'Send Reset Link' }}
+              </el-button>
+            </el-form-item>
+          </el-form>
 
-        <div class="form-group">
-          <label for="email">Email</label>
-          <input
-            id="email"
-            v-model="email"
-            type="email"
-            required
-            placeholder="Enter your email"
-          />
-        </div>
+          <el-divider />
 
-        <button type="submit" class="btn btn-primary" :disabled="loading || success">
-          {{ loading ? 'Sending...' : 'Send Reset Link' }}
-        </button>
-      </form>
-
-      <div class="auth-links">
-        <router-link to="/login">Back to login</router-link>
-      </div>
-    </div>
+          <div class="auth-links">
+            <el-link type="primary" @click="router.push('/login')">
+              Back to login
+            </el-link>
+          </div>
+        </el-card>
+      </el-col>
+    </el-row>
   </div>
 </template>
 
@@ -67,104 +97,19 @@ const handleSubmit = async () => {
   justify-content: center;
   align-items: center;
   min-height: calc(100vh - 200px);
+  padding: 2rem 0;
 }
 
-.auth-container {
-  width: 100%;
-  max-width: 400px;
-  padding: 2rem;
-  background: white;
-  border-radius: 8px;
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-}
-
-h1 {
+.card-header {
   text-align: center;
-  margin-bottom: 1rem;
+}
+
+.card-header h1 {
+  margin: 0 0 0.5rem 0;
   color: #2c3e50;
-}
-
-.info {
-  text-align: center;
-  color: #666;
-  margin-bottom: 2rem;
-}
-
-.error-message {
-  background: #fee;
-  color: #c33;
-  padding: 1rem;
-  border-radius: 4px;
-  margin-bottom: 1rem;
-}
-
-.success-message {
-  background: #efe;
-  color: #3c3;
-  padding: 1rem;
-  border-radius: 4px;
-  margin-bottom: 1rem;
-}
-
-.form-group {
-  margin-bottom: 1.5rem;
-}
-
-label {
-  display: block;
-  margin-bottom: 0.5rem;
-  color: #2c3e50;
-  font-weight: 500;
-}
-
-input {
-  width: 100%;
-  padding: 0.75rem;
-  border: 1px solid #ddd;
-  border-radius: 4px;
-  font-size: 1rem;
-}
-
-input:focus {
-  outline: none;
-  border-color: #3498db;
-}
-
-.btn {
-  width: 100%;
-  padding: 0.75rem;
-  border: none;
-  border-radius: 4px;
-  font-size: 1rem;
-  cursor: pointer;
-  transition: background 0.3s;
-}
-
-.btn-primary {
-  background: #3498db;
-  color: white;
-}
-
-.btn-primary:hover:not(:disabled) {
-  background: #2980b9;
-}
-
-.btn:disabled {
-  opacity: 0.6;
-  cursor: not-allowed;
 }
 
 .auth-links {
-  margin-top: 1.5rem;
   text-align: center;
-}
-
-.auth-links a {
-  color: #3498db;
-  text-decoration: none;
-}
-
-.auth-links a:hover {
-  text-decoration: underline;
 }
 </style>

@@ -1,8 +1,10 @@
 <script setup>
-import { ref, onMounted, computed } from 'vue';
+import { ref, onMounted } from 'vue';
 import { useRouter } from 'vue-router';
 import { productService, categoryService, brandService } from '../../api/services';
 import { useCartStore } from '../../stores/cart';
+import { Search, ShoppingCart } from '@element-plus/icons-vue';
+import { ElMessage } from 'element-plus';
 
 const router = useRouter();
 const cartStore = useCartStore();
@@ -68,18 +70,10 @@ const applyFilters = () => {
   loadProducts();
 };
 
-const nextPage = () => {
-  if (page.value < totalPages.value - 1) {
-    page.value++;
-    loadProducts();
-  }
-};
-
-const prevPage = () => {
-  if (page.value > 0) {
-    page.value--;
-    loadProducts();
-  }
+const handlePageChange = (newPage) => {
+  page.value = newPage - 1;
+  loadProducts();
+  window.scrollTo({ top: 0, behavior: 'smooth' });
 };
 
 const viewProduct = (id) => {
@@ -89,71 +83,136 @@ const viewProduct = (id) => {
 const addToCart = (product) => {
   if (product.stock > 0) {
     cartStore.addItem(product);
-    alert('Added to cart!');
+    ElMessage.success('Added to cart!');
   }
 };
 </script>
 
 <template>
   <div class="products-page">
-    <h1>Products</h1>
+    <el-page-header title="Products" />
     
-    <div class="filters">
-      <input
-        v-model="filters.name"
-        type="text"
-        placeholder="Search products..."
-        @input="applyFilters"
-      />
+    <el-card shadow="never" style="margin-top: 20px">
+      <el-row :gutter="20">
+        <el-col :xs="24" :sm="12" :md="8">
+          <el-input
+            v-model="filters.name"
+            :prefix-icon="Search"
+            placeholder="Search products..."
+            @input="applyFilters"
+            clearable
+            size="large"
+          />
+        </el-col>
+        
+        <el-col :xs="24" :sm="6" :md="4">
+          <el-select 
+            v-model="filters.categoryId" 
+            @change="applyFilters"
+            placeholder="Category"
+            clearable
+            size="large"
+            style="width: 100%"
+          >
+            <el-option label="All Categories" :value="null" />
+            <el-option 
+              v-for="category in categories" 
+              :key="category.id" 
+              :label="category.name"
+              :value="category.id"
+            />
+          </el-select>
+        </el-col>
+        
+        <el-col :xs="24" :sm="6" :md="4">
+          <el-select 
+            v-model="filters.brandId" 
+            @change="applyFilters"
+            placeholder="Brand"
+            clearable
+            size="large"
+            style="width: 100%"
+          >
+            <el-option label="All Brands" :value="null" />
+            <el-option 
+              v-for="brand in brands" 
+              :key="brand.id" 
+              :label="brand.name"
+              :value="brand.id"
+            />
+          </el-select>
+        </el-col>
+      </el-row>
+    </el-card>
+
+    <div v-loading="loading" style="min-height: 400px; margin-top: 20px">
+      <el-row v-if="!loading && products.length > 0" :gutter="20">
+        <el-col 
+          v-for="product in products" 
+          :key="product.id"
+          :xs="24"
+          :sm="12"
+          :md="8"
+          :lg="6"
+        >
+          <el-card 
+            :body-style="{ padding: '0px' }"
+            shadow="hover"
+            class="product-card"
+          >
+            <div class="product-image" @click="viewProduct(product.id)">
+              <el-image 
+                :src="product.imageUrl || '/placeholder.jpg'" 
+                :alt="product.name"
+                fit="cover"
+                style="width: 100%; height: 200px"
+              />
+            </div>
+            <div class="product-info">
+              <el-text 
+                size="large" 
+                tag="b" 
+                @click="viewProduct(product.id)" 
+                class="product-name"
+                truncated
+              >
+                {{ product.name }}
+              </el-text>
+              <el-space>
+                <el-tag size="small">{{ product.categoryName }}</el-tag>
+                <el-tag size="small" type="info">{{ product.brandName }}</el-tag>
+              </el-space>
+              <div class="price-section">
+                <el-text size="large" tag="b" type="success">${{ product.unitPrice }}</el-text>
+                <el-tag v-if="product.stock <= 0" type="danger" size="small">Out of Stock</el-tag>
+                <el-tag v-else type="success" size="small">In Stock</el-tag>
+              </div>
+              <el-button 
+                type="primary" 
+                :icon="ShoppingCart"
+                @click="addToCart(product)"
+                :disabled="product.stock <= 0"
+                style="width: 100%"
+              >
+                Add to Cart
+              </el-button>
+            </div>
+          </el-card>
+        </el-col>
+      </el-row>
       
-      <select v-model="filters.categoryId" @change="applyFilters">
-        <option :value="null">All Categories</option>
-        <option v-for="category in categories" :key="category.id" :value="category.id">
-          {{ category.name }}
-        </option>
-      </select>
-      
-      <select v-model="filters.brandId" @change="applyFilters">
-        <option :value="null">All Brands</option>
-        <option v-for="brand in brands" :key="brand.id" :value="brand.id">
-          {{ brand.name }}
-        </option>
-      </select>
+      <el-empty v-else-if="!loading" description="No products found." />
     </div>
 
-    <div v-if="loading" class="loading">Loading products...</div>
-    
-    <div v-else-if="products.length > 0" class="product-grid">
-      <div v-for="product in products" :key="product.id" class="product-card">
-        <div class="product-image" @click="viewProduct(product.id)">
-          <img :src="product.imageUrl || '/placeholder.jpg'" :alt="product.name" />
-        </div>
-        <div class="product-info">
-          <h3 @click="viewProduct(product.id)">{{ product.name }}</h3>
-          <p class="category">{{ product.categoryName }} • {{ product.brandName }}</p>
-          <p class="price">${{ product.unitPrice }}</p>
-          <div class="actions">
-            <button 
-              class="btn btn-primary" 
-              @click="addToCart(product)"
-              :disabled="product.stock <= 0"
-            >
-              {{ product.stock > 0 ? 'Add to Cart' : 'Out of Stock' }}
-            </button>
-          </div>
-        </div>
-      </div>
-    </div>
-    
-    <div v-else class="no-products">
-      <p>No products found.</p>
-    </div>
-
-    <div v-if="totalPages > 1" class="pagination">
-      <button @click="prevPage" :disabled="page === 0">Previous</button>
-      <span>Page {{ page + 1 }} of {{ totalPages }}</span>
-      <button @click="nextPage" :disabled="page >= totalPages - 1">Next</button>
-    </div>
+    <el-pagination
+      v-if="totalPages > 1"
+      v-model:current-page="page"
+      :page-size="size"
+      :total="totalPages * size"
+      layout="prev, pager, next"
+      @current-change="handlePageChange"
+      style="margin-top: 20px; justify-content: center; display: flex"
+    />
   </div>
 </template>
 
@@ -162,152 +221,40 @@ const addToCart = (product) => {
   max-width: 100%;
 }
 
-h1 {
-  margin-bottom: 2rem;
-}
-
-.filters {
-  display: flex;
-  gap: 1rem;
-  margin-bottom: 2rem;
-  flex-wrap: wrap;
-}
-
-.filters input,
-.filters select {
-  padding: 0.75rem;
-  border: 1px solid #ddd;
-  border-radius: 4px;
-  font-size: 1rem;
-}
-
-.filters input {
-  flex: 1;
-  min-width: 200px;
-}
-
-.filters select {
-  min-width: 150px;
-}
-
-.loading,
-.no-products {
-  text-align: center;
-  padding: 2rem;
-  color: #666;
-}
-
-.product-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
-  gap: 2rem;
-  margin-bottom: 2rem;
-}
-
 .product-card {
-  border: 1px solid #ddd;
-  border-radius: 8px;
-  overflow: hidden;
-  transition: transform 0.3s, box-shadow 0.3s;
+  margin-bottom: 20px;
+  transition: transform 0.3s;
 }
 
 .product-card:hover {
   transform: translateY(-5px);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
 }
 
 .product-image {
-  width: 100%;
-  height: 200px;
-  overflow: hidden;
-  background: #f5f5f5;
   cursor: pointer;
-}
-
-.product-image img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
+  overflow: hidden;
 }
 
 .product-info {
   padding: 1rem;
-}
-
-.product-info h3 {
-  font-size: 1.1rem;
-  margin-bottom: 0.5rem;
-  color: #2c3e50;
-  cursor: pointer;
-}
-
-.product-info h3:hover {
-  color: #3498db;
-}
-
-.category {
-  color: #7f8c8d;
-  font-size: 0.9rem;
-  margin-bottom: 0.5rem;
-}
-
-.price {
-  font-size: 1.25rem;
-  font-weight: bold;
-  color: #27ae60;
-  margin-bottom: 1rem;
-}
-
-.actions {
   display: flex;
+  flex-direction: column;
   gap: 0.5rem;
 }
 
-.btn {
-  flex: 1;
-  padding: 0.5rem;
-  border: none;
-  border-radius: 4px;
+.product-name {
   cursor: pointer;
-  transition: background 0.3s;
+  display: block;
 }
 
-.btn-primary {
-  background: #3498db;
-  color: white;
+.product-name:hover {
+  color: #409EFF;
 }
 
-.btn-primary:hover:not(:disabled) {
-  background: #2980b9;
-}
-
-.btn:disabled {
-  background: #ccc;
-  cursor: not-allowed;
-}
-
-.pagination {
+.price-section {
   display: flex;
-  justify-content: center;
+  justify-content: space-between;
   align-items: center;
-  gap: 1rem;
-  margin-top: 2rem;
-}
-
-.pagination button {
-  padding: 0.5rem 1rem;
-  border: 1px solid #ddd;
-  border-radius: 4px;
-  background: white;
-  cursor: pointer;
-}
-
-.pagination button:hover:not(:disabled) {
-  background: #f5f5f5;
-}
-
-.pagination button:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
+  margin: 0.5rem 0;
 }
 </style>
