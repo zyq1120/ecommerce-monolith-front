@@ -1,0 +1,145 @@
+/* Youdao Blue Theme */
+:root {
+  /* 有道蓝主色 - Youdao Blue Primary Colors */
+  --youdao-blue: #0c7cd5;
+  --youdao-blue-light: #4da6f5;
+  --youdao-blue-lighter: #7ec1f7;
+  --youdao-blue-dark: #0a5fa3;
+  --youdao-blue-darker: #084d85;
+  
+  /* Element Plus Theme Override */
+  --el-color-primary: #0c7cd5;
+  --el-color-primary-light-3: #4da6f5;
+  --el-color-primary-light-5: #7ec1f7;
+  --el-color-primary-light-7: #a8d4f9;
+  --el-color-primary-light-8: #c4e3fb;
+  --el-color-primary-light-9: #e1f2fd;
+  --el-color-primary-dark-2: #0a5fa3;
+  
+  /* Success Color - Green with blue tint */
+  --el-color-success: #0db899;
+  --el-color-success-light-3: #4dd1b5;
+  --el-color-success-light-5: #7dddc9;
+  --el-color-success-light-7: #ade9dd;
+  --el-color-success-light-9: #e6f7f4;
+  
+  /* Info Color - Lighter Blue */
+  --el-color-info: #5fa8d3;
+  --el-color-info-light-3: #8bc4e3;
+  --el-color-info-light-5: #add7ed;
+  --el-color-info-light-9: #e8f4f9;
+  
+  /* Header Background */
+  --header-bg: #0c7cd5;
+  --header-bg-dark: #0a5fa3;
+  
+  /* Footer Background */
+  --footer-bg: #084d85;
+  
+  /* Hero Gradient */
+  --hero-gradient-start: #0c7cd5;
+  --hero-gradient-end: #0a5fa3;
+}
+
+/* Global Styles */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html, body {
+  height: 100%;
+}
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen,
+    Ubuntu, Cantarell, 'Helvetica Neue', sans-serif;
+}
+
+/* Element Plus Component Overrides */
+.el-button--primary {
+  background-color: var(--youdao-blue);
+  border-color: var(--youdao-blue);
+}
+
+.el-button--primary:hover,
+.el-button--primary:focus {
+  background-color: var(--youdao-blue-light);
+  border-color: var(--youdao-blue-light);
+}
+
+.el-button--primary:active {
+  background-color: var(--youdao-blue-dark);
+  border-color: var(--youdao-blue-dark);
+}
+
+.el-menu-item.is-active {
+  color: var(--youdao-blue-lighter) !important;
+  border-bottom-color: var(--youdao-blue-lighter) !important;
+}
+
+.el-link.el-link--primary {
+  color: var(--youdao-blue);
+}
+
+.el-link.el-link--primary:hover {
+  color: var(--youdao-blue-light);
+}
+
+.el-badge__content {
+  background-color: var(--el-color-danger);
+}
+
+/* Card Hover Effects */
+.el-card:hover {
+  box-shadow: 0 4px 12px rgba(12, 124, 213, 0.15);
+}
+
+/* Input Focus */
+.el-input__wrapper.is-focus {
+  box-shadow: 0 0 0 1px var(--youdao-blue-light) inset;
+}
+
+/* Tag Colors */
+.el-tag--success {
+  --el-tag-bg-color: var(--el-color-success-light-9);
+  --el-tag-border-color: var(--el-color-success-light-5);
+  --el-tag-text-color: var(--el-color-success-dark-2);
+}
+
+.el-tag--info {
+  --el-tag-bg-color: var(--el-color-info-light-9);
+  --el-tag-border-color: var(--el-color-info-light-5);
+  --el-tag-text-color: var(--el-color-info-dark-2);
+}
+
+/* Loading */
+.el-loading-spinner .el-loading-text {
+  color: var(--youdao-blue);
+}
+
+.el-loading-spinner .path {
+  stroke: var(--youdao-blue);
+}
+
+/* Pagination */
+.el-pagination.is-background .el-pager li:not(.is-disabled).is-active {
+  background-color: var(--youdao-blue);
+}
+
+.el-pagination.is-background .el-pager li:not(.is-disabled):hover {
+  color: var(--youdao-blue);
+}
+
+/* Message */
+.el-message--success {
+  --el-message-bg-color: var(--el-color-success-light-9);
+  --el-message-border-color: var(--el-color-success-light-5);
+  --el-message-text-color: var(--el-color-success-dark-2);
+}
+
+/* Empty State */
+.el-empty__description {
+  color: var(--el-text-color-secondary);
+}
