@@ -17,7 +17,7 @@
 
 <style scoped>
 .footer {
-  background: #34495e;
+  background: var(--footer-bg);
   color: white;
   padding: 2rem 0;
   margin-top: auto;
@@ -40,7 +40,7 @@
 }
 
 :deep(.el-link:hover) {
-  color: #409EFF;
+  color: var(--youdao-blue-lighter);
 }
 
 :deep(.el-divider--vertical) {

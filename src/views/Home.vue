@@ -113,7 +113,7 @@ const addToCart = (product) => {
 .hero {
   text-align: center;
   padding: 4rem 2rem;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: linear-gradient(135deg, var(--hero-gradient-start) 0%, var(--hero-gradient-end) 100%);
   color: white;
   border-radius: 8px;
   margin-bottom: 3rem;
@@ -166,7 +166,7 @@ const addToCart = (product) => {
 }
 
 .product-name:hover {
-  color: #409EFF;
+  color: var(--youdao-blue);
 }
 
 .price-section {

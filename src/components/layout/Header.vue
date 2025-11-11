@@ -32,9 +32,9 @@ const logout = () => {
       <el-menu
         mode="horizontal"
         :ellipsis="false"
-        background-color="#2c3e50"
+        :background-color="'var(--header-bg)'"
         text-color="#fff"
-        active-text-color="#409EFF"
+        :active-text-color="'var(--youdao-blue-lighter)'"
         router
         class="main-menu"
       >
@@ -80,11 +80,11 @@ const logout = () => {
 
 <style scoped>
 .header {
-  background: #2c3e50;
+  background: var(--header-bg);
   color: white;
   padding: 0;
   height: 60px;
-  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  box-shadow: 0 2px 8px rgba(12, 124, 213, 0.15);
 }
 
 .header-content {
@@ -127,6 +127,6 @@ const logout = () => {
 }
 
 :deep(.el-menu--horizontal > .el-menu-item.is-active) {
-  border-bottom: 2px solid #409EFF;
+  border-bottom: 2px solid var(--youdao-blue-lighter);
 }
 </style>

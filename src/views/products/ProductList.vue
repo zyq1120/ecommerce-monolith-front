@@ -248,7 +248,7 @@ const addToCart = (product) => {
 }
 
 .product-name:hover {
-  color: #409EFF;
+  color: var(--youdao-blue);
 }
 
 .price-section {
